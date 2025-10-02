@@ -13,12 +13,14 @@ export function Dashboard() {
   const [draggingId, setDraggingId] = useState<string | null>(null);
   const [showAnalytics, setShowAnalytics] = useState(false);
   const [isPaused, setIsPaused] = useState(false);
+  const [globalCounter, setGlobalCounter] = useState(0);
   const canvasRef = useRef<HTMLDivElement>(null);
   const animationRef = useRef<number>();
   const isDragging = useRef(false);
 
   useEffect(() => {
     loadThoughts();
+    loadCounter();
   }, []);
 
   useEffect(() => {
@@ -38,6 +40,18 @@ export function Dashboard() {
 
     if (data) {
       setThoughts(data as Thought[]);
+    }
+  }
+
+  async function loadCounter() {
+    const { data } = await supabase
+      .from('global_counter')
+      .select('thought_count')
+      .eq('id', 1)
+      .single();
+
+    if (data) {
+      setGlobalCounter(data.thought_count);
     }
   }
 
@@ -104,12 +118,12 @@ export function Dashboard() {
       ? newThoughtText.substring(0, maxLength)
       : newThoughtText;
 
-    const maxJobNumber = thoughts.reduce((max, t) => Math.max(max, t.job_number), 0);
+    const newCounter = globalCounter + 1;
     const canvasWidth = canvasRef.current.offsetWidth - 320;
     const canvasHeight = canvasRef.current.offsetHeight;
 
     const newThought = {
-      job_number: maxJobNumber + 1,
+      job_number: newCounter,
       text: trimmedText,
       size: 1,
       position_x: Math.random() * (canvasWidth - 400) + 200,
@@ -122,6 +136,12 @@ export function Dashboard() {
     const { data } = await supabase.from('thoughts').insert([newThought]).select().single();
 
     if (data) {
+      await supabase
+        .from('global_counter')
+        .update({ thought_count: newCounter, updated_at: new Date().toISOString() })
+        .eq('id', 1);
+
+      setGlobalCounter(newCounter);
       setThoughts([...thoughts, data as Thought]);
       setNewThoughtText('');
       setShowInput(false);
@@ -211,16 +231,19 @@ export function Dashboard() {
           </button>
           <button
             onClick={async () => {
-              if (confirm('Tem certeza que deseja zerar o contador de hoje?')) {
-                await supabase.from('thoughts').delete().gte('created_at', new Date().setHours(0,0,0,0)).lte('created_at', new Date().setHours(23,59,59,999));
-                loadThoughts();
+              if (confirm('Tem certeza que deseja resetar o contador?')) {
+                await supabase
+                  .from('global_counter')
+                  .update({ thought_count: 0, updated_at: new Date().toISOString() })
+                  .eq('id', 1);
+                setGlobalCounter(0);
               }
             }}
             className="px-2 py-1.5 bg-zinc-800 hover:bg-zinc-700 text-white rounded transition-colors flex items-center gap-1.5"
-            title="Zerar pensamentos de hoje"
+            title="Resetar contador"
           >
             <BarChart3 className="w-3.5 h-3.5" />
-            <span className="text-xs">{todayThoughts.length}</span>
+            <span className="text-xs">{globalCounter}</span>
           </button>
         </div>
 
