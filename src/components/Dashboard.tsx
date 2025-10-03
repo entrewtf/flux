@@ -230,7 +230,7 @@ export function Dashboard() {
               <h2 className="text-red-500 text-xl font-medium mb-2">Erro de Conexão</h2>
               <p className="text-white mb-4">{error}</p>
               <p className="text-zinc-400 text-sm mb-4">
-                Certifique-se de que as variáveis de ambiente VITE_SUPABASE_URL e VITE_SUPABASE_ANON_KEY estão configuradas corretamente.
+                Certifique-se de que as variáveis de ambiente VITE_BOLT_BASE_URL e VITE_BOLT_BASE_ANON_KEY estão configuradas corretamente.
               </p>
               <button
                 onClick={() => window.location.reload()}
