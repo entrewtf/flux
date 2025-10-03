@@ -14,6 +14,7 @@ export function Dashboard() {
   const [showAnalytics, setShowAnalytics] = useState(false);
   const [isPaused, setIsPaused] = useState(false);
   const [globalCounter, setGlobalCounter] = useState(0);
+  const [error, setError] = useState<string | null>(null);
   const canvasRef = useRef<HTMLDivElement>(null);
   const animationRef = useRef<number>();
   const isDragging = useRef(false);
@@ -33,25 +34,45 @@ export function Dashboard() {
   }, []);
 
   async function loadThoughts() {
-    const { data } = await supabase
-      .from('thoughts')
-      .select('*')
-      .order('created_at', { ascending: true });
+    try {
+      const { data, error } = await supabase
+        .from('thoughts')
+        .select('*')
+        .order('created_at', { ascending: true });
 
-    if (data) {
-      setThoughts(data as Thought[]);
+      if (error) {
+        console.error('Erro ao carregar pensamentos:', error);
+        setError('Erro ao conectar ao banco de dados. Verifique as variáveis de ambiente.');
+        return;
+      }
+
+      if (data) {
+        setThoughts(data as Thought[]);
+      }
+    } catch (err) {
+      console.error('Erro:', err);
+      setError('Erro ao conectar ao banco de dados.');
     }
   }
 
   async function loadCounter() {
-    const { data } = await supabase
-      .from('global_counter')
-      .select('thought_count')
-      .eq('id', 1)
-      .single();
+    try {
+      const { data, error } = await supabase
+        .from('global_counter')
+        .select('thought_count')
+        .eq('id', 1)
+        .single();
 
-    if (data) {
-      setGlobalCounter(data.thought_count);
+      if (error) {
+        console.error('Erro ao carregar contador:', error);
+        return;
+      }
+
+      if (data) {
+        setGlobalCounter(data.thought_count);
+      }
+    } catch (err) {
+      console.error('Erro:', err);
     }
   }
 
@@ -203,6 +224,24 @@ export function Dashboard() {
   return (
     <div className="h-screen bg-black flex">
       <div ref={canvasRef} className="flex-1 relative overflow-hidden">
+        {error && (
+          <div className="absolute inset-0 flex items-center justify-center z-50 bg-black bg-opacity-80">
+            <div className="bg-zinc-900 border border-red-500 rounded-lg p-6 max-w-md">
+              <h2 className="text-red-500 text-xl font-medium mb-2">Erro de Conexão</h2>
+              <p className="text-white mb-4">{error}</p>
+              <p className="text-zinc-400 text-sm mb-4">
+                Certifique-se de que as variáveis de ambiente VITE_SUPABASE_URL e VITE_SUPABASE_ANON_KEY estão configuradas corretamente.
+              </p>
+              <button
+                onClick={() => window.location.reload()}
+                className="px-4 py-2 bg-zinc-700 hover:bg-zinc-600 text-white rounded transition-colors"
+              >
+                Recarregar
+              </button>
+            </div>
+          </div>
+        )}
+
         <div className="absolute top-6 left-8 z-20">
           <h1 className="text-white text-2xl font-light tracking-wide">
             <span className="text-yellow-500">&gt;_</span> Flux
