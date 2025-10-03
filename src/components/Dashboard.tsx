@@ -15,6 +15,7 @@ export function Dashboard() {
   const [isPaused, setIsPaused] = useState(false);
   const [globalCounter, setGlobalCounter] = useState(0);
   const [error, setError] = useState<string | null>(null);
+  const [showSidebar, setShowSidebar] = useState(true);
   const canvasRef = useRef<HTMLDivElement>(null);
   const animationRef = useRef<number>();
   const isDragging = useRef(false);
@@ -22,7 +23,17 @@ export function Dashboard() {
   useEffect(() => {
     loadThoughts();
     loadCounter();
-  }, []);
+
+    const handleKeyPress = (e: KeyboardEvent) => {
+      if (e.code === 'Space' && !showInput) {
+        e.preventDefault();
+        setShowSidebar(prev => !prev);
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyPress);
+    return () => window.removeEventListener('keydown', handleKeyPress);
+  }, [showInput]);
 
   useEffect(() => {
     startAnimation();
@@ -31,7 +42,7 @@ export function Dashboard() {
         cancelAnimationFrame(animationRef.current);
       }
     };
-  }, []);
+  }, [showSidebar]);
 
   async function loadThoughts() {
     try {
@@ -91,7 +102,8 @@ export function Dashboard() {
         const canvas = canvasRef.current;
         if (!canvas) return prevThoughts;
 
-        const canvasWidth = canvas.offsetWidth - 320;
+        const sidebarWidth = showSidebar ? 320 : 0;
+        const canvasWidth = canvas.offsetWidth - sidebarWidth;
         const canvasHeight = canvas.offsetHeight;
 
         return prevThoughts.map((thought) => {
@@ -392,7 +404,7 @@ export function Dashboard() {
         )}
       </div>
 
-      <NotesSidebar />
+      {showSidebar && <NotesSidebar />}
     </div>
   );
 }
