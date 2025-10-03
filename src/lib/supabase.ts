@@ -1,7 +1,7 @@
 import { createClient } from '@supabase/supabase-js';
 
-const supabaseUrl = import.meta.env.VITE_BOLT_DATABASE_URL;
-const supabaseAnonKey = import.meta.env.VITE_BOLT_DATABASE_ANON_KEY;
+const supabaseUrl = import.meta.env.VITE_BOLT_DATA_BASE_URL;
+const supabaseAnonKey = import.meta.env.VITE_BOLT_DATA_BASE_ANON_KEY;
 
 export const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
