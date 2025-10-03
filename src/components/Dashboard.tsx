@@ -61,7 +61,7 @@ export function Dashboard() {
         .from('global_counter')
         .select('thought_count')
         .eq('id', 1)
-        .single();
+        .maybeSingle();
 
       if (error) {
         console.error('Erro ao carregar contador:', error);
